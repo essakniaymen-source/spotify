@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Spotify">
+  <meta name="theme-color" content="#0E0E10">
+  <meta name="format-detection" content="telephone=no">
+  <title>Spotify</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Persistent HTML5 Audio Engine -->
+  <audio id="audio-player" playsinline preload="auto"></audio>
+
+  <!-- Hidden Multi-File MP3 Picker -->
+  <input id="mp3-file-input" type="file" accept="audio/mp3,audio/*" multiple hidden>
+
+  <!-- Main App Shell -->
+  <div id="app" class="app-shell">
+    <main id="main-views" class="views-container">
+
+      <!-- VIEW 1: HOME SCREEN -->
+      <section id="view-home" class="view active" aria-label="Home">
+        <header class="top-header home-header">
+          <div>
+            <p class="header-kicker">Local Library</p>
+            <h1 id="home-greeting" class="page-title">Good evening!</h1>
+          </div>
+          <div class="header-actions">
+            <button id="home-history-btn" class="icon-pill-btn" type="button" aria-label="Sleep timer and history" title="Timer &amp; History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 7 12 12 15.5 14"/>
+              </svg>
+            </button>
+            <button id="home-import-btn" class="icon-pill-btn accent-subtle" type="button" aria-label="Import MP3s" title="Import MP3s">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Empty Library Onboarding -->
+        <div id="home-empty-state" class="empty-hero glass-card" hidden>
+          <div class="empty-wave-badge" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <h2>Your offline music, right here</h2>
+          <p>Import MP3 files from your iPhone Files app. Cover art, ID3 tags, lyrics, and playlists stay 100% offline on your device.</p>
+          <button id="empty-import-cta" class="primary-pill-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Import MP3s</span>
+          </button>
+        </div>
+
+        <!-- Recently Played Carousel -->
+        <section id="recently-played-section" class="home-section" hidden>
+          <div class="section-header">
+            <h2 class="section-title">Recently played</h2>
+          </div>
+          <div id="recently-played-carousel" class="h-scroll-row" role="list"></div>
+        </section>
+
+        <!-- Your Favourite Albums (Ranked) -->
+        <section id="top-albums-section" class="home-section" hidden>
+          <div class="section-header">
+            <h2 class="section-title">Your favourite albums</h2>
+          </div>
+          <div id="top-albums-carousel" class="h-scroll-row ranked-row" role="list"></div>
+        </section>
+
+        <!-- Uniquely Yours / Quick Mixes -->
+        <section id="quick-mixes-section" class="home-section" hidden>
+          <div class="section-header">
+            <h2 class="section-title">Uniquely yours</h2>
+          </div>
+          <div id="quick-mixes-carousel" class="h-scroll-row" role="list"></div>
+        </section>
+      </section>
+
+      <!-- VIEW 2: SEARCH & BROWSE SCREEN -->
+      <section id="view-search" class="view" aria-label="Search">
+        <header class="top-header">
+          <div class="search-header-row">
+            <h1 class="page-title">Search</h1>
+            <button id="search-back-btn" class="text-pill-btn" type="button" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              <span>Browse</span>
+            </button>
+          </div>
+          <p id="search-subtitle" class="section-caption" hidden></p>
+        </header>
+
+        <!-- 2-Column Colorful Category Grid -->
+        <div id="search-browse-content">
+          <h2 class="sub-section-title">Browse all</h2>
+          <div id="category-grid" class="category-grid"></div>
+        </div>
+
+        <!-- Live Search / Category Filter Results -->
+        <div id="search-results-content" hidden>
+          <div id="search-results-actions" class="results-action-bar" hidden>
+            <button id="search-play-all-btn" class="primary-pill-btn small" type="button">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+              <span>Play all</span>
+            </button>
+            <span id="search-results-count" class="muted-count"></span>
+          </div>
+          <div id="search-results-list" class="track-list"></div>
+          <div id="search-no-results" class="empty-inline" hidden>
+            <p>No matching tracks found in your local library.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3 (TAB 3): LIBRARY & PLAYLISTS -->
+      <section id="view-library" class="view" aria-label="Library">
+        <header class="top-header">
+          <div class="library-header-row">
+            <h1 class="page-title">Your Library</h1>
+            <div class="header-actions">
+              <button id="lib-new-playlist-btn" class="icon-pill-btn" type="button" aria-label="Create playlist" title="Create playlist">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
+              <button id="lib-import-btn" class="icon-pill-btn accent-subtle" type="button" aria-label="Import MP3s" title="Import MP3s">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="library-filter-pills" class="chip-row" role="tablist" aria-label="Library filters">
+            <button class="filter-chip active" data-filter="all" type="button">All</button>
+            <button class="filter-chip" data-filter="playlists" type="button">Playlists</button>
+            <button class="filter-chip" data-filter="tracks" type="button">Tracks</button>
+            <button class="filter-chip" data-filter="albums" type="button">Albums</button>
+            <button class="filter-chip" data-filter="artists" type="button">Artists</button>
+          </div>
+        </header>
+
+        <!-- Library Root Content -->
+        <div id="library-root-content">
+          <div id="library-playlists-block" class="library-block">
+            <h2 class="sub-section-title">Playlists</h2>
+            <div id="library-playlists-list" class="entity-list"></div>
+          </div>
+
+          <div id="library-albums-block" class="library-block" hidden>
+            <h2 class="sub-section-title">Albums</h2>
+            <div id="library-albums-grid" class="album-grid"></div>
+          </div>
+
+          <div id="library-artists-block" class="library-block" hidden>
+            <h2 class="sub-section-title">Artists</h2>
+            <div id="library-artists-list" class="entity-list"></div>
+          </div>
+
+          <div id="library-tracks-block" class="library-block">
+            <div class="sub-header-inline">
+              <h2 class="sub-section-title">All Songs</h2>
+              <span id="library-track-count" class="muted-count">0 songs</span>
+            </div>
+            <div id="library-tracks-list" class="track-list"></div>
+          </div>
+        </div>
+
+        <!-- Library Detail (Playlist / Album / Artist drilldown) -->
+        <div id="library-detail-content" hidden>
+          <button id="library-detail-back" class="text-pill-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <span>Back to Library</span>
+          </button>
+          <div id="library-detail-header" class="detail-hero"></div>
+          <div id="library-detail-tracks" class="track-list"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 4 (TAB 4): IMPORT & LOCAL PROFILE -->
+      <section id="view-import" class="view" aria-label="Import and Storage">
+        <header class="top-header">
+          <p class="header-kicker">Offline Device Vault</p>
+          <h1 class="page-title">Import &amp; Library</h1>
+        </header>
+
+        <!-- Prominent Import MP3s Card -->
+        <div class="import-hero-card glass-card">
+          <div class="import-hero-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <h2>Add MP3s from your iPhone</h2>
+          <p>Batch-select local audio files from the Files app. ID3 tags, embedded cover art, and lyrics are parsed offline.</p>
+          <button id="import-mp3s-btn" class="primary-pill-btn large" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Import MP3s</span>
+          </button>
+
+          <div id="import-progress-wrap" class="import-progress" hidden>
+            <div class="import-progress-top">
+              <span id="import-progress-label">Importing tracks...</span>
+              <span id="import-progress-pct">0%</span>
+            </div>
+            <div class="import-progress-track">
+              <div id="import-progress-bar" class="import-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Storage Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span id="stat-tracks" class="stat-value">0</span>
+            <span class="stat-label">Tracks</span>
+          </div>
+          <div class="stat-card">
+            <span id="stat-playlists" class="stat-value">0</span>
+            <span class="stat-label">Playlists</span>
+          </div>
+          <div class="stat-card">
+            <span id="stat-favorites" class="stat-value">0</span>
+            <span class="stat-label">Favorites</span>
+          </div>
+          <div class="stat-card">
+            <span id="stat-storage" class="stat-value">0 MB</span>
+            <span class="stat-label">Stored</span>
+          </div>
+        </div>
+
+        <!-- Playlist & Track Management Actions -->
+        <div class="management-card glass-card">
+          <h3 class="card-heading">Manage Library</h3>
+          <button id="import-create-playlist-btn" class="menu-row-btn" type="button">
+            <span class="menu-row-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+            <span class="menu-row-text">
+              <strong>Create Playlist</strong>
+              <small>Organize imported songs into custom mixes</small>
+            </span>
+          </button>
+          <button id="import-open-library-btn" class="menu-row-btn" type="button">
+            <span class="menu-row-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </span>
+            <span class="menu-row-text">
+              <strong>Manage All Tracks</strong>
+              <small>Edit ID3 metadata, lyrics, or remove songs</small>
+            </span>
+          </button>
+          <button id="import-clear-library-btn" class="menu-row-btn danger" type="button">
+            <span class="menu-row-icon danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </span>
+            <span class="menu-row-text">
+              <strong>Clear Local Library</strong>
+              <small>Remove all stored MP3s &amp; reset IndexedDB</small>
+            </span>
+          </button>
+        </div>
+
+        <!-- iOS Install Banner (auto-hidden when standalone) -->
+        <div id="ios-install-tip" class="ios-tip-card glass-card">
+          <h3>Add to iPhone Home Screen</h3>
+          <p>In Safari, tap the <strong>Share</strong> icon and choose <strong>Add to Home Screen</strong> to launch Spotify full-screen offline.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Frosted-Glass Search Bar (shown on Search tab above dock) -->
+    <div id="floating-search-bar" class="floating-search-wrap" hidden>
+      <div class="floating-search-pill">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="search-input" type="search" placeholder="Search your favourite music" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search your favourite music">
+        <button id="search-clear-btn" class="search-clear-btn" type="button" aria-label="Clear search" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- FLOATING BOTTOM GLASSMORPHIC DOCK -->
+    <div id="bottom-dock" class="bottom-dock">
+      <!-- Compact Mini-Player -->
+      <div id="mini-player" class="mini-player is-idle" role="region" aria-label="Mini player">
+        <div class="mini-progress-track" aria-hidden="true">
+          <div id="mini-progress-fill" class="mini-progress-fill"></div>
+        </div>
+        <div id="mini-player-tap" class="mini-player-tap" role="button" tabindex="0" aria-label="Open Now Playing">
+          <img id="mini-art" class="mini-art" src="" alt="" hidden>
+          <div id="mini-art-fallback" class="mini-art-fallback" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <div class="mini-meta">
+            <span id="mini-title" class="mini-title">No track selected</span>
+            <span id="mini-artist" class="mini-artist">Import MP3s to listen offline</span>
+          </div>
+        </div>
+        <div class="mini-controls">
+          <button id="mini-fav-btn" class="mini-fav-btn" type="button" aria-label="Toggle favorite" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+          <button id="mini-play-btn" class="mini-play-btn" type="button" aria-label="Play" aria-pressed="false">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4-Tab Navigation Bar -->
+      <nav id="tab-bar" class="tab-bar" aria-label="Primary navigation">
+        <button class="tab-btn active" data-tab="home" type="button" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6.5h-5V21H4a1 1 0 0 1-1-1v-9.5z"/>
+          </svg>
+          <span>Home</span>
+        </button>
+        <button class="tab-btn" data-tab="search" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7.5"/>
+            <line x1="20.5" y1="20.5" x2="16.5" y2="16.5"/>
+          </svg>
+          <span>Search</span>
+        </button>
+        <button class="tab-btn" data-tab="library" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5V4.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>
+            <path d="M10 19.5V4.5a1 1 0 0 1 1-1h2.5a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H11a1 1 0 0 1-1-1z"/>
+            <path d="M15.5 5.2l3.8-.9a1 1 0 0 1 1.2.74l2.4 13.7a1 1 0 0 1-.76 1.18l-2.9.65a1 1 0 0 1-1.2-.74L15.5 5.2z"/>
+          </svg>
+          <span>Library</span>
+        </button>
+        <button class="tab-btn" data-tab="import" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Import</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- VIEW 3 (FULL-SCREEN OVERLAY): NOW PLAYING PLAYER -->
+    <section id="now-playing-view" class="now-playing-overlay" aria-label="Now Playing" aria-hidden="true">
+      <div id="np-bg-layer" class="np-bg-layer"></div>
+      <div class="np-content">
+        <!-- Top Header -->
+        <header class="np-header">
+          <button id="np-collapse-btn" class="np-icon-btn" type="button" aria-label="Minimize player">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="np-source">
+            <span id="np-source-label" class="np-source-label">PLAYING FROM LIBRARY</span>
+            <span id="np-source-name" class="np-source-name">Local MP3s</span>
+          </div>
+          <button id="np-timer-btn" class="np-icon-btn" type="button" aria-label="Sleep timer and history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15.5 14"/>
+            </svg>
+            <span id="np-timer-badge" class="timer-badge" hidden></span>
+          </button>
+        </header>
+
+        <!-- Center Artwork -->
+        <div id="np-artwork-stage" class="np-artwork-stage">
+          <div class="np-artwork-card">
+            <img id="np-artwork" src="" alt="Album artwork">
+          </div>
+        </div>
+
+        <!-- Track Info Row -->
+        <div class="np-info-row">
+          <div class="np-title-wrap">
+            <h2 id="np-title" class="np-title">Track Title</h2>
+            <p id="np-artist" class="np-artist">Artist Name</p>
+          </div>
+          <div class="np-info-actions">
+            <button id="np-device-btn" class="np-icon-btn subtle" type="button" aria-label="Playback queue &amp; audio output">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="14" height="11" rx="2"/>
+                <path d="M6 20h6"/>
+                <rect x="17" y="9" width="5" height="11" rx="1.2"/>
+              </svg>
+            </button>
+            <button id="np-more-btn" class="np-icon-btn subtle" type="button" aria-label="Track options">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrubbable Progress Bar -->
+        <div class="np-progress-wrap">
+          <input id="np-seek-slider" class="np-seek-slider" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek track position">
+          <div class="np-time-row">
+            <span id="np-time-elapsed">0:00</span>
+            <span id="np-time-total" title="Tap to toggle remaining time">0:00</span>
+          </div>
+        </div>
+
+        <!-- Primary Controls Row -->
+        <div class="np-controls-row">
+          <button id="np-queue-btn" class="np-icon-btn" type="button" aria-label="Up Next Queue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>
+            </svg>
+          </button>
+          <button id="np-prev-btn" class="np-skip-btn" type="button" aria-label="Previous track">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <rect x="4" y="5" width="2.6" height="14" rx="1"/>
+              <polygon points="19 5 8 12 19 19 19 5"/>
+            </svg>
+          </button>
+          <button id="np-play-btn" class="np-play-btn" type="button" aria-label="Play" aria-pressed="false">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="8 5 20 12 8 19 8 5"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="3.8" height="14" rx="1.2"/><rect x="13.7" y="5" width="3.8" height="14" rx="1.2"/></svg>
+          </button>
+          <button id="np-next-btn" class="np-skip-btn" type="button" aria-label="Next track">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 5 16 12 5 19 5 5"/>
+              <rect x="17.4" y="5" width="2.6" height="14" rx="1"/>
+            </svg>
+          </button>
+          <button id="np-fav-btn" class="np-icon-btn" type="button" aria-label="Toggle favorite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Bottom Action Row -->
+        <div class="np-bottom-row">
+          <button id="np-share-btn" class="np-icon-btn subtle" type="button" aria-label="Share or export track">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+          </button>
+          <button id="np-lyrics-btn" class="np-lyrics-pill" type="button">
+            <span class="lyrics-glyph" aria-hidden="true">≡</span>
+            <span>Text</span>
+          </button>
+          <button id="np-shuffle-btn" class="np-icon-btn subtle" type="button" aria-label="Toggle shuffle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 3 21 3 21 8"/>
+              <line x1="4" y1="20" x2="21" y2="3"/>
+              <polyline points="21 16 21 21 16 21"/>
+              <line x1="15" y1="15" x2="21" y2="21"/>
+              <line x1="4" y1="4" x2="9" y2="9"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODALS & SHEETS -->
+  <div id="modal-backdrop" class="modal-backdrop" hidden></div>
+
+  <!-- Lyrics / Text Modal -->
+  <div id="lyrics-modal" class="sheet-modal tall" role="dialog" aria-modal="true" aria-labelledby="lyrics-modal-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <div>
+        <h3 id="lyrics-modal-title">Lyrics &amp; Text</h3>
+        <p id="lyrics-track-sub" class="sheet-sub"></p>
+      </div>
+      <div class="sheet-header-actions">
+        <button id="lyrics-edit-toggle" class="text-pill-btn small" type="button">Edit</button>
+        <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+      </div>
+    </header>
+    <div class="sheet-body">
+      <div id="lyrics-view-pane" class="lyrics-display"></div>
+      <div id="lyrics-edit-pane" hidden>
+        <textarea id="lyrics-textarea" class="lyrics-textarea" rows="12" placeholder="Paste or type custom lyrics for this track..."></textarea>
+        <div class="sheet-btn-row">
+          <button id="lyrics-cancel-btn" class="secondary-pill-btn" type="button">Cancel</button>
+          <button id="lyrics-save-btn" class="primary-pill-btn" type="button">Save Lyrics</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Up Next Queue Modal -->
+  <div id="queue-modal" class="sheet-modal tall" role="dialog" aria-modal="true" aria-labelledby="queue-modal-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <div>
+        <h3 id="queue-modal-title">Up Next</h3>
+        <p id="queue-count-sub" class="sheet-sub"></p>
+      </div>
+      <div class="sheet-header-actions">
+        <button id="queue-repeat-btn" class="text-pill-btn small" type="button">Repeat: Off</button>
+        <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+      </div>
+    </header>
+    <div id="queue-list" class="sheet-body track-list compact"></div>
+  </div>
+
+  <!-- Sleep Timer & History Modal -->
+  <div id="timer-history-modal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="timer-modal-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <h3 id="timer-modal-title">Timer &amp; History</h3>
+      <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+    </header>
+    <div class="sheet-tabs">
+      <button class="sheet-tab-btn active" data-sheet-tab="timer" type="button">Sleep Timer</button>
+      <button class="sheet-tab-btn" data-sheet-tab="history" type="button">Recently Played</button>
+    </div>
+    <div class="sheet-body">
+      <div id="sheet-timer-pane">
+        <p id="timer-status-text" class="sheet-hint">Stop audio automatically after a set time.</p>
+        <div id="timer-options-list" class="timer-grid">
+          <button class="timer-option-btn" data-minutes="0" type="button">Off</button>
+          <button class="timer-option-btn" data-minutes="5" type="button">5 min</button>
+          <button class="timer-option-btn" data-minutes="15" type="button">15 min</button>
+          <button class="timer-option-btn" data-minutes="30" type="button">30 min</button>
+          <button class="timer-option-btn" data-minutes="45" type="button">45 min</button>
+          <button class="timer-option-btn" data-minutes="60" type="button">60 min</button>
+          <button class="timer-option-btn wide" data-minutes="end" type="button">End of current track</button>
+        </div>
+      </div>
+      <div id="sheet-history-pane" hidden>
+        <div id="history-list" class="track-list compact"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-Dot Track Options Sheet -->
+  <div id="track-menu-modal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="track-menu-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <div class="menu-track-preview">
+        <img id="menu-track-art" src="" alt="">
+        <div>
+          <h3 id="track-menu-title">Track</h3>
+          <p id="track-menu-artist" class="sheet-sub"></p>
+        </div>
+      </div>
+      <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+    </header>
+    <div class="sheet-body action-sheet-list">
+      <button id="menu-play-next-btn" class="action-sheet-item" type="button">Play next in queue</button>
+      <button id="menu-add-playlist-btn" class="action-sheet-item" type="button">Add to playlist</button>
+      <button id="menu-edit-meta-btn" class="action-sheet-item" type="button">Edit metadata</button>
+      <button id="menu-edit-lyrics-btn" class="action-sheet-item" type="button">View / Edit lyrics</button>
+      <button id="menu-delete-track-btn" class="action-sheet-item danger" type="button">Delete track</button>
+    </div>
+  </div>
+
+  <!-- Edit Metadata Modal -->
+  <div id="edit-meta-modal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="edit-meta-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <h3 id="edit-meta-title">Edit Track Metadata</h3>
+      <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+    </header>
+    <form id="edit-meta-form" class="sheet-body form-stack">
+      <label class="form-field">
+        <span>Title</span>
+        <input id="meta-title-input" type="text" required maxlength="140">
+      </label>
+      <label class="form-field">
+        <span>Artist</span>
+        <input id="meta-artist-input" type="text" required maxlength="140">
+      </label>
+      <label class="form-field">
+        <span>Album</span>
+        <input id="meta-album-input" type="text" maxlength="140">
+      </label>
+      <div class="form-row-2">
+        <label class="form-field">
+          <span>Genre</span>
+          <input id="meta-genre-input" type="text" maxlength="60" placeholder="e.g. Hip-Hop">
+        </label>
+        <label class="form-field">
+          <span>Year</span>
+          <input id="meta-year-input" type="text" maxlength="10" inputmode="numeric" placeholder="e.g. 2024">
+        </label>
+      </div>
+      <div class="sheet-btn-row">
+        <button class="secondary-pill-btn" data-close-modal type="button">Cancel</button>
+        <button class="primary-pill-btn" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Playlist Picker / Creator Modal -->
+  <div id="playlist-modal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="playlist-modal-title" hidden>
+    <div class="sheet-handle"></div>
+    <header class="sheet-header">
+      <h3 id="playlist-modal-title">Add to Playlist</h3>
+      <button class="sheet-close-btn" data-close-modal type="button" aria-label="Close">✕</button>
+    </header>
+    <div class="sheet-body">
+      <form id="new-playlist-form" class="inline-create-form">
+        <input id="new-playlist-name" type="text" placeholder="New playlist name..." maxlength="80" required>
+        <button class="primary-pill-btn small" type="submit">Create</button>
+      </form>
+      <div id="playlist-picker-list" class="entity-list compact"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

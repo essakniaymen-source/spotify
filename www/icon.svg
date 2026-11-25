@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="46%" r="52%">
+      <stop offset="0%" stop-color="#1ED760" stop-opacity="0.16"/>
+      <stop offset="65%" stop-color="#1ED760" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#0E0E10" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2DF072"/>
+      <stop offset="100%" stop-color="#1ED760"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" ry="112" fill="#0E0E10"/>
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bgGlow)"/>
+  <g fill="url(#waveGrad)">
+    <rect x="128" y="216" width="34" height="80" rx="17"/>
+    <rect x="184" y="164" width="34" height="184" rx="17"/>
+    <rect x="239" y="116" width="34" height="280" rx="17"/>
+    <rect x="294" y="152" width="34" height="208" rx="17"/>
+    <rect x="350" y="200" width="34" height="112" rx="17"/>
+  </g>
+</svg>
